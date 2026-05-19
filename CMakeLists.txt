@@ -1,0 +1,11 @@
+cmake_minimum_required(VERSION 3.28.2)
+
+if(BUILD_TARGET STREQUAL "elf")
+    include(../sdk/config.cmake)
+    project(sieelf_89_theme_engine C)
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+    add_subdirectory(elf)
+elseif(BUILD_TARGET STREQUAL "patch")
+    project(patch_89_theme_engine C)
+    add_subdirectory(patch)
+endif()
