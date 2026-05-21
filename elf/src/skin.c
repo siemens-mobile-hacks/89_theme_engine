@@ -121,6 +121,15 @@ SKIN_T SKIN = {
             {CFG_UINT, "Header separator width", 1, 240},
             226,
             {CFG_LEVEL, "", 0, 0},
+        }, {
+            {CFG_LEVEL, "Fields", 1, 0},
+            {CFG_COLOR, "Background color", 0, 0},
+            {0x00, 0x00, 0x00, 0x58},
+            {CFG_CHECKBOX, "Border", 0, 1},
+            1,
+            {CFG_COLOR, "Border color", 0, 0},
+            {0xD0, 0x20, 0x20, 0x50},
+            {CFG_LEVEL, "", 0, 0},
         },
         {CFG_LEVEL, "", 0, 0},
     }, {

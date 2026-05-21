@@ -12,6 +12,8 @@
 #define POPUP_FEEDBACK_CROP_Y  40
 #define POPUP_FEEDBACK_CLEAR_W 4
 #define POPUP_FEEDBACK_CLEAR_H 28
+#define POPUP_FIELD_CLEAR_H 1
+#define POPUP_SEARCH_FIELD_CLEAR_W 33
 
 #define Cs_SetColor(id, rgba) RscMgr_CsSetColor(id - 100, rgba)
 #define Cs_Update() RscMgr_CsUpdate()
@@ -299,6 +301,43 @@ static int ApplyPopups(const IMGHDR* wallpaper) {
         const int separator_x = (ScreenW() - separator_w) / 2;
         const int separator_x2 = separator_x + separator_w;
         IMGHDR_DrawHLine(popup_options, separator_x, POPUP_OPTIONS_SEPARATOR_Y, separator_x2, 0, SKIN.popup.border_col);
+    }
+    // Fields
+    theme_cache_id = TCI_POPUP_SEARCH_FIELD;
+    IMGHDR *popup_search_field = GetIMGHDRFromThemeCache(theme_cache_id);
+    if (!popup_search_field) {
+        return theme_cache_id;
+    }
+    if (!InjectImageSolid(popup_search_field, SKIN.popup.fields.bg_col)) {
+        return theme_cache_id;
+    }
+    const int popup_field_clear_bottom_start = popup_search_field->h - 1 - POPUP_FIELD_CLEAR_H;
+    const int popup_field_clear_bottom_end = popup_search_field->h - 1;
+    IMGHDR_TransparentV(popup_search_field, popup_field_clear_bottom_start, popup_field_clear_bottom_end);
+    if (SKIN.popup.fields.border) {
+        IMGHDR_DrawBorder(popup_search_field,
+            0, 0, popup_search_field->w - 1, popup_field_clear_bottom_start,
+            0, SKIN.popup.fields.border_col);
+    }
+    theme_cache_id = TCI_POPUP_QUICK_ACCESS_FIELD;
+    IMGHDR *popup_quick_access_field = GetIMGHDRFromThemeCache(theme_cache_id);
+    if (!popup_quick_access_field) {
+        return theme_cache_id;
+    }
+    if (!IMGHDR_Clone(popup_quick_access_field, popup_search_field)) {
+        return theme_cache_id;
+    }
+    const int popup_search_field_clear_top_end = 1;
+    const int popup_search_field_clear_left_end = POPUP_SEARCH_FIELD_CLEAR_W;
+    IMGHDR_TransparentV(popup_search_field, 0, popup_search_field_clear_top_end);
+    IMGHDR_TransparentH(popup_search_field, 0, popup_search_field_clear_left_end);
+    if (SKIN.popup.fields.border) {
+        IMGHDR_DrawHLine(popup_search_field,
+            popup_search_field_clear_left_end, popup_search_field_clear_top_end, popup_search_field->w - 1,
+            0, SKIN.popup.fields.border_col);
+        IMGHDR_DrawVLine(popup_search_field,
+            popup_search_field_clear_left_end, popup_search_field_clear_top_end, popup_field_clear_bottom_start,
+            0, SKIN.popup.fields.border_col);
     }
     return 0;
 }

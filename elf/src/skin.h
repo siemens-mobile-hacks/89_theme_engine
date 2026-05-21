@@ -174,6 +174,20 @@ typedef struct {
 
 typedef struct {
     const CFG_HDR cfghdr_b;
+    const CFG_HDR cfghdr_0;
+    // Background color
+    uint8_t bg_col[4];
+    const CFG_HDR cfghdr_1;
+    // Border
+    int border;
+    const CFG_HDR cfghdr_2;
+    // Border color
+    uint8_t border_col[4];
+    const CFG_HDR cfghdr_e;
+} SKIN_POPUP_FIELDS;
+
+typedef struct {
+    const CFG_HDR cfghdr_b;
     // Blur
     const CFG_HDR cfghdr_0;
     int blur;
@@ -194,6 +208,8 @@ typedef struct {
     uint8_t border_col[4];
     // Options
     SKIN_POPUP_OPTIONS options;
+    // Field
+    SKIN_POPUP_FIELDS fields;
     const CFG_HDR cfghdr_e;
 } SKIN_POPUP;
 
