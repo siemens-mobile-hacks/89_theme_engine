@@ -16,6 +16,7 @@
 #define POPUP_SEARCH_FIELD_CLEAR_W 33
 
 #define Cs_SetColor(id, rgba) RscMgr_CsSetColor(id - 100, rgba)
+#define Cs_SetTransparent(id) RscMgr_CsSetColor(id - 100, (uint8_t[4]){0x00, 0x00, 0x00, 0x00})
 #define Cs_Update() RscMgr_CsUpdate()
 
 static uint16_t InjectImage(IMGHDR *dest, const IMGHDR *wallpaper, int crop_y) {
@@ -139,6 +140,7 @@ static int ApplyHeadline(const IMGHDR *wallpaper, uint16_t *crop_y) {
     Cs_SetColor(TPC_HEADER_FOREGROUND, SKIN.headline.text_col);
     Cs_SetColor(TPC_EXTRA_HEADER_FOREGROUND, SKIN.headline.text_col);
     Cs_SetColor(TPC_LIGHT_TEXT_FOREGROUND, SKIN.headline.text_col);
+    Cs_SetTransparent(TPC_LIGHT_TEXT_BACKGROUND);
     Cs_SetColor(TPC_WINDOW_HEADER_FOREGROUND, SKIN.headline.text_col);
     *crop_y += headline_fullscreen->h;
     return 0;
