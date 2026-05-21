@@ -16,6 +16,6 @@ make
 2. **Associate the `.89` extension** with `89ThemeEngine.elf`:
    - **RUN** → `89ThemeEngine.elf` – applies the theme.
    - **ALTRUN** → `CfgEdit.elf` – allows editing the skin file.
-3. Run the ELF once manually. It will create a default skin file named `Default.89` in the same folder as the ELF.
-4. Click on a `.89` file (e.g., `Default.89`).  
+3. Run the ELF once manually. It will create a default skin file named `Viktor.89` in the same folder as the ELF.
+4. Click on a `.89` file (e.g., `Viktor.89`).  
    The ELF will parse the skin, combine it with the current wallpaper, and apply the theme immediately.

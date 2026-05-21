@@ -79,7 +79,7 @@ int GetDefaultSkinPath(char *dest, const char *exe_path) {
         const size_t len = p - exe_path;
         strncpy(dest, exe_path, len);
         dest[len] = '\0';
-        strcat(dest, "\\Default.89");
+        strcat(dest, "\\Viktor.89");
         return 1;
     }
     return 0;
