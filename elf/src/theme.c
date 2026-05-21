@@ -137,7 +137,7 @@ static int ApplyHeadline(const IMGHDR *wallpaper, uint16_t *crop_y) {
     Cs_SetColor(TPC_HEADER_FOREGROUND, SKIN.headline.text_col);
     Cs_SetColor(TPC_EXTRA_HEADER_FOREGROUND, SKIN.headline.text_col);
     Cs_SetColor(TPC_LIGHT_TEXT_FOREGROUND, SKIN.headline.text_col);
-    Cs_SetColor(TPC_POPUP_HEADER_FOREGROUND, SKIN.headline.text_col);
+    Cs_SetColor(TPC_WINDOW_HEADER_FOREGROUND, SKIN.headline.text_col);
     *crop_y += headline_fullscreen->h;
     return 0;
 }
@@ -246,39 +246,9 @@ static int ApplyTabs() {
 }
 
 static int ApplyPopups(const IMGHDR* wallpaper) {
-    // Options
-    int theme_cache_id = TCI_POPUP_OPTIONS;
-    IMGHDR *status_bar = GetIMGHDRFromThemeCache(TCI_STATUS_BAR_STANDARD);
-    IMGHDR *headline = GetIMGHDRFromThemeCache(TCI_HEADLINE_DEFAULT);
-    if (!headline || !status_bar) {
-        return theme_cache_id;
-    }
-    int crop_y = status_bar->h + headline->h;
-    IMGHDR* popup_options = GetIMGHDRFromThemeCache(theme_cache_id);
-    popup_options->h += 1;
-    popup_options = PrepareBgImage(popup_options, wallpaper, crop_y,
-                                   SKIN.popup.blur, SKIN.popup.blur_radius,
-                                   SKIN.popup.overlay, SKIN.popup.overlay_col);
-    if (!popup_options) {
-        return theme_cache_id;
-    }
-    const int popup_options_clear_top_end = POPUP_OPTIONS_CLEAR_H;
-    IMGHDR_TransparentV(popup_options, 0, popup_options_clear_top_end);
-    if (SKIN.popup.border) {
-        IMGHDR_DrawBorder(popup_options,
-                          0, popup_options_clear_top_end,
-                          popup_options->w - 1, popup_options->h - 1,
-                          0, SKIN.popup.border_col);
-    }
-    if (SKIN.popup.options.header_separator) {
-        const int separator_w = (int)SKIN.popup.options.header_separator_width - 1;
-        const int separator_x = (ScreenW() - separator_w) / 2;
-        const int separator_x2 = separator_x + separator_w;
-        IMGHDR_DrawHLine(popup_options, separator_x, POPUP_OPTIONS_SEPARATOR_Y, separator_x2, 0, SKIN.popup.border_col);
-    }
+    int crop_y = POPUP_FEEDBACK_CROP_Y;
+    int theme_cache_id = TCI_POPUP_FEEDBACK;
     // Feedback
-    crop_y = POPUP_FEEDBACK_CROP_Y;
-    theme_cache_id = TCI_POPUP_FEEDBACK;
     IMGHDR* popup_feedback = PrepareBgImage(GetIMGHDRFromThemeCache(theme_cache_id), wallpaper, crop_y,
                                             SKIN.popup.blur, SKIN.popup.blur_radius,
                                             SKIN.popup.overlay, SKIN.popup.overlay_col);
@@ -300,6 +270,36 @@ static int ApplyPopups(const IMGHDR* wallpaper) {
                           0, SKIN.popup.border_col
         );
     }
+    // Options
+    theme_cache_id = TCI_POPUP_OPTIONS;
+    IMGHDR *status_bar = GetIMGHDRFromThemeCache(TCI_STATUS_BAR_STANDARD);
+    IMGHDR *headline = GetIMGHDRFromThemeCache(TCI_HEADLINE_DEFAULT);
+    if (!headline || !status_bar) {
+        return theme_cache_id;
+    }
+    crop_y = status_bar->h + headline->h;
+    IMGHDR* popup_options = GetIMGHDRFromThemeCache(theme_cache_id);
+    popup_options->h = popup_feedback->h + 1;
+    popup_options = PrepareBgImage(popup_options, wallpaper, crop_y,
+                                   SKIN.popup.blur, SKIN.popup.blur_radius,
+                                   SKIN.popup.overlay, SKIN.popup.overlay_col);
+    if (!popup_options) {
+        return theme_cache_id;
+    }
+    const int popup_options_clear_top_end = POPUP_OPTIONS_CLEAR_H;
+    IMGHDR_TransparentV(popup_options, 0, popup_options_clear_top_end);
+    if (SKIN.popup.border) {
+        IMGHDR_DrawBorder(popup_options,
+                          0, popup_options_clear_top_end,
+                          popup_options->w - 1, popup_options->h - 1,
+                          0, SKIN.popup.border_col);
+    }
+    if (SKIN.popup.options.header_separator) {
+        const int separator_w = (int)SKIN.popup.options.header_separator_width - 1;
+        const int separator_x = (ScreenW() - separator_w) / 2;
+        const int separator_x2 = separator_x + separator_w;
+        IMGHDR_DrawHLine(popup_options, separator_x, POPUP_OPTIONS_SEPARATOR_Y, separator_x2, 0, SKIN.popup.border_col);
+    }
     return 0;
 }
 
@@ -319,9 +319,9 @@ static int ApplyProgressBar() {
 }
 
 static int ApplyCalendar() {
-    Cs_SetColor(TPC_CALENDAR_DAYBACKGROUND, SKIN.calendar.day_bg_col);
-    Cs_SetColor(TPC_CALENDAR_WEEKENDBACKGROUND, SKIN.calendar.weekend_bg_col);
-    Cs_SetColor(TPC_CALENDAR_EVENTBACKGROUND, SKIN.calendar.event_bg_col);
+    Cs_SetColor(TPC_CALENDAR_DAY_BACKGROUND, SKIN.calendar.day_bg_col);
+    Cs_SetColor(TPC_CALENDAR_WEEKEND_BACKGROUND, SKIN.calendar.weekend_bg_col);
+    Cs_SetColor(TPC_CALENDAR_EVENT_BACKGROUND, SKIN.calendar.event_bg_col);
     Cs_SetColor(TPC_CALENDAR_FOREGROUND, SKIN.calendar.fg_col);
     return 0;
 }
