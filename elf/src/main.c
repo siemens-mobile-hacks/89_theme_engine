@@ -6,9 +6,8 @@
 #include "skin.h"
 #include "theme.h"
 #include "config.h"
-
-#define REGISTRY_CLIENT_MSG_ID    0x9991
-#define REGISTRY_HMI_ID_WALLPAPER 0x65
+#include "registry.h"
+#include "theme_cache.h"
 
 typedef struct {
     CSM_RAM csm;
@@ -28,12 +27,7 @@ int ShowWait() {
 
 void RegClient(MAIN_CSM *csm) {
     if (csm->reg_client_id == - 1) {
-        REG_CLIENT client = { 0 };
-        client.cepid = MMI_CEPID;
-        client.msg_id = REGISTRY_CLIENT_MSG_ID;
-        client.hmi_keys = (short[]){REGISTRY_HMI_ID_WALLPAPER};
-        client.hmi_keys_count = 1;
-        csm->reg_client_id = Registry_RegClient(&client);
+        csm->reg_client_id = Registry_RegClient_Wallpaper();
         if (csm->reg_client_id < 0) {
             MsgBoxError(0x11, (int)"Failed to register client with Registry");
             csm->reg_client_id = -1;
@@ -46,7 +40,15 @@ void ApplyTheme(MAIN_CSM *csm) {
         const int err = Theme_Apply();
         if (err == 0) {
             RegClient(csm);
-            ShowMSG(0x11, (int)"Theme has been applied");
+            if (!ThemeCache_Save()) {
+                ShowMSG(0x11, (int)"Theme applied, but cache not saved");
+            } else {
+                ShowMSG(0x11, (int)"Theme has been applied");
+            }
+            strcpy(CFG.skin_path, csm->skin_path);
+            if (!Config_Save()) {
+                MsgBoxError(0x11, (int)"Failed to save config");
+            }
         } else {
             char msg[32];
             sprintf(msg, "Failed to apply theme, error %d", err);
@@ -110,10 +112,6 @@ int OnMessage(CSM_RAM *data, GBS_MSG *msg) {
                     }
                     return 0;
                 }
-                if (CFG.auto_apply && strlen(CFG.skin_path)) {
-                    strcpy(csm->skin_path, CFG.skin_path);
-                    ApplyThemeTimer(csm);
-                }
             } else if (msg->submess == IPC_APPLY_THEME) {
                 if (!csm->please_wait_gui_id) {
                     csm->please_wait_gui_id = ShowWait();
@@ -136,6 +134,7 @@ int OnMessage(CSM_RAM *data, GBS_MSG *msg) {
             IPC_SendMessage(IPC_APPLY_THEME, NULL);
         }
     } else if (msg->msg == REGISTRY_CLIENT_MSG_ID) {
+        strcpy(csm->skin_path, CFG.skin_path);
         ApplyThemeTimer(csm);
     }
     return 1;
