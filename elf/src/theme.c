@@ -3,8 +3,10 @@
 #include <string.h>
 #include <swilib.h>
 #include "skin.h"
+#include "pbar.h"
 #include "config.h"
 #include "img_utils.h"
+#include "theme_utils.h"
 
 #define BODY_TAB_SEPARATOR_Y 33
 #define POPUP_OPTIONS_CLEAR_H 5
@@ -47,13 +49,15 @@ static int InjectImageSolid(IMGHDR *dest, const uint8_t rgba[4]) {
     return 0;
 }
 
-static void ConvertImage(IMGHDR *image) {
+static int ConvertImage(IMGHDR *image) {
     IMGHDR *img = IMGHDR_ARGB8888_to_RGB565(image);
     if (img) {
         mfree(image->bitmap);
         memcpy(image, img, sizeof(IMGHDR));
         mfree(img);
+        return 1;
     }
+    return 0;
 }
 
 static IMGHDR *PrepareBgImage(IMGHDR *dest, const IMGHDR *wallpaper, uint16_t crop_y,
@@ -91,21 +95,34 @@ static int ApplyGeneral() {
         IMGHDR_DrawHLine(new_separator, 0, 0, new_separator->w - 1, LINE_DOTTED, SKIN.general.separator_col);
         PIT_SetImage(CFG.separator_icon_id, new_separator);
     }
+    PBar_Step(PBAR_TEXT_APPLY, "Menu separator");
     Cs_SetColor(TPC_SELECT_BORDER, SKIN.general.select_border_col);
     Cs_SetColor(TPC_SEPARATOR, SKIN.general.separator_col);
     return 0;
 }
 
 static int ApplyStatusBar(const IMGHDR *wallpaper, uint16_t *crop_y) {
-    const int theme_cache_id = TCI_STATUS_BAR_STANDARD;
-    IMGHDR *status_bar = PrepareBgImage(GetIMGHDRFromThemeCache(theme_cache_id), wallpaper, *crop_y,
+    int theme_cache_id = TCI_STATUS_BAR_STANDARD;
+    IMGHDR *status_bar_standard = PrepareBgImage(GetIMGHDRFromThemeCache(theme_cache_id), wallpaper, *crop_y,
         SKIN.status_bar.blur, SKIN.status_bar.blur_radius,
         SKIN.status_bar.overlay, SKIN.status_bar.overlay_col);
-    if (!status_bar) {
+    if (!status_bar_standard) {
         return theme_cache_id;
     }
-    ConvertImage(status_bar);
-    *crop_y += status_bar->h;
+    if (!ConvertImage(status_bar_standard)) {
+        return theme_cache_id;
+    }
+    PBar_Step(PBAR_TEXT_APPLY, ThemeUtils_GetImageDisplayName(theme_cache_id));
+    theme_cache_id = TCI_STATUS_BAR_FULLSCREEN;
+    IMGHDR *status_bar_fullscreen = GetIMGHDRFromThemeCache(theme_cache_id);
+    if (!status_bar_fullscreen) {
+        return theme_cache_id;
+    }
+    if (!IMGHDR_Clone(status_bar_fullscreen, status_bar_standard)) {
+        return theme_cache_id;
+    }
+    PBar_Step(PBAR_TEXT_APPLY, ThemeUtils_GetImageDisplayName(theme_cache_id));
+    *crop_y += status_bar_standard->h;
     return 0;
 }
 
@@ -128,7 +145,10 @@ static int ApplyHeadline(const IMGHDR *wallpaper, uint16_t *crop_y) {
             IMGHDR_DrawHLine(headline_default, border_x, headline_default->h - 1, border_x2, 0, SKIN.headline.border_col);
         }
     }
-    ConvertImage(headline_default);
+    if (!ConvertImage(headline_default)) {
+        return theme_cache_id;
+    }
+    PBar_Step(PBAR_TEXT_APPLY, ThemeUtils_GetImageDisplayName(theme_cache_id));
     theme_cache_id = TCI_HEADLINE_FULLSCREEN;
     IMGHDR *headline_fullscreen = GetIMGHDRFromThemeCache(theme_cache_id);
     if (!headline_fullscreen) {
@@ -137,6 +157,7 @@ static int ApplyHeadline(const IMGHDR *wallpaper, uint16_t *crop_y) {
     if (!IMGHDR_Clone(headline_fullscreen, headline_default)) {
         return theme_cache_id;
     }
+    PBar_Step(PBAR_TEXT_APPLY, ThemeUtils_GetImageDisplayName(theme_cache_id));
     Cs_SetColor(TPC_HEADER_FOREGROUND, SKIN.headline.text_col);
     Cs_SetColor(TPC_EXTRA_HEADER_FOREGROUND, SKIN.headline.text_col);
     Cs_SetColor(TPC_LIGHT_TEXT_FOREGROUND, SKIN.headline.text_col);
@@ -154,7 +175,10 @@ static int ApplyBody(const IMGHDR *wallpaper, uint16_t *crop_y) {
     if (!body_default) {
         return theme_cache_id;
     }
-    ConvertImage(body_default);
+    if (!ConvertImage(body_default)) {
+        return theme_cache_id;
+    }
+    PBar_Step(PBAR_TEXT_APPLY, ThemeUtils_GetImageDisplayName(theme_cache_id));
     theme_cache_id = TCI_BODY_TAB;
     IMGHDR *body_tab = PrepareBgImage(GetIMGHDRFromThemeCache(theme_cache_id), wallpaper, *crop_y,
         SKIN.body.blur, SKIN.body.blur_radius,
@@ -168,7 +192,10 @@ static int ApplyBody(const IMGHDR *wallpaper, uint16_t *crop_y) {
         const int separator_x2 = separator_x + separator_w;
         IMGHDR_DrawHLine(body_tab, separator_x, BODY_TAB_SEPARATOR_Y, separator_x2, 0, SKIN.tabs.separator_col);
     }
-    ConvertImage(body_tab);
+    if (!ConvertImage(body_tab)) {
+        return theme_cache_id;
+    }
+    PBar_Step(PBAR_TEXT_APPLY, ThemeUtils_GetImageDisplayName(theme_cache_id));
     Cs_SetColor(TPC_FOREGROUND, SKIN.body.main_text_col);
     Cs_SetColor(TPC_DISABLED_TEXT_FOREGROUND, SKIN.body.disabled_text_col);
     Cs_SetColor(TPC_EDIT_HEADER_FOREGROUND, SKIN.body.edit_header_text_col);
@@ -188,11 +215,15 @@ static int ApplyBottom(const IMGHDR *wallpaper, const uint16_t *crop_y) {
     if (SKIN.bottom.border) {
         IMGHDR_DrawHLine(bottom_default, 0, 0, bottom_default->w - 1, 0, SKIN.bottom.border_col);
     }
-    ConvertImage(bottom_default);
+    if (!ConvertImage(bottom_default)) {
+        return theme_cache_id;
+    }
+    PBar_Step(PBAR_TEXT_APPLY, ThemeUtils_GetImageDisplayName(theme_cache_id));
     theme_cache_id = TCI_BOTTOM_FULLSCREEN;
     if (!IMGHDR_Clone(GetIMGHDRFromThemeCache(theme_cache_id), bottom_default)) {
         return theme_cache_id;
     }
+    PBar_Step(PBAR_TEXT_APPLY, ThemeUtils_GetImageDisplayName(theme_cache_id));
     Cs_SetColor(TPC_BOTTOM_FOREGROUND, SKIN.bottom.text_col);
     return 0;
 }
@@ -214,6 +245,7 @@ static int ApplySelection() {
         if (SKIN.selection.border) {
             IMGHDR_DrawBorder(selection, 0, selection_clear_top_end, selection->w - 1, selection->h - 1, 0, SKIN.selection.border_col);
         }
+        PBar_Step(PBAR_TEXT_APPLY, ThemeUtils_GetImageDisplayName(theme_cache_id));
     }
     Cs_SetColor(TPC_SELECT_FOREGROUND, SKIN.selection.selected_text_col);
     Cs_SetColor(TPC_UNSELECT_FOREGOUND, SKIN.selection.unselected_text_col);
@@ -232,7 +264,10 @@ static int ApplyTabs() {
     if (!InjectImageSolid(tab_unselected, (uint8_t [4]){0x00, 0x00, 0x00, 0x00})) {
         return theme_cache_id;
     }
-    ConvertImage(tab_unselected);
+    if (!ConvertImage(tab_unselected)) {
+        return theme_cache_id;
+    }
+    PBar_Step(PBAR_TEXT_APPLY, ThemeUtils_GetImageDisplayName(theme_cache_id));
     theme_cache_id = TCI_TAB_SELECTED;
     IMGHDR *tab_selected = GetIMGHDRFromThemeCache(theme_cache_id);
     if (!tab_selected) {
@@ -245,6 +280,7 @@ static int ApplyTabs() {
     mfree(tab_selected->bitmap);
     memcpy(tab_selected, tab_selected_mask, sizeof(IMGHDR));
     mfree(tab_selected_mask);
+    PBar_Step(PBAR_TEXT_APPLY, ThemeUtils_GetImageDisplayName(theme_cache_id));
     return 0;
 }
 
@@ -273,6 +309,10 @@ static int ApplyPopups(const IMGHDR* wallpaper) {
                           0, SKIN.popup.border_col
         );
     }
+    if (!ConvertImage(popup_feedback)) {
+        return theme_cache_id;
+    }
+    PBar_Step(PBAR_TEXT_APPLY, ThemeUtils_GetImageDisplayName(theme_cache_id));
     // Options
     theme_cache_id = TCI_POPUP_OPTIONS;
     IMGHDR *status_bar = GetIMGHDRFromThemeCache(TCI_STATUS_BAR_STANDARD);
@@ -303,6 +343,10 @@ static int ApplyPopups(const IMGHDR* wallpaper) {
         const int separator_x2 = separator_x + separator_w;
         IMGHDR_DrawHLine(popup_options, separator_x, POPUP_OPTIONS_SEPARATOR_Y, separator_x2, 0, SKIN.popup.border_col);
     }
+    if (!ConvertImage(popup_options)) {
+        return theme_cache_id;
+    }
+    PBar_Step(PBAR_TEXT_APPLY, ThemeUtils_GetImageDisplayName(theme_cache_id));
     // Fields
     theme_cache_id = TCI_POPUP_SEARCH_FIELD;
     IMGHDR *popup_search_field = GetIMGHDRFromThemeCache(theme_cache_id);
@@ -320,6 +364,7 @@ static int ApplyPopups(const IMGHDR* wallpaper) {
             0, 0, popup_search_field->w - 1, popup_field_clear_bottom_start,
             0, SKIN.popup.fields.border_col);
     }
+    PBar_Step(PBAR_TEXT_APPLY, ThemeUtils_GetImageDisplayName(theme_cache_id));
     theme_cache_id = TCI_POPUP_QUICK_ACCESS_FIELD;
     IMGHDR *popup_quick_access_field = GetIMGHDRFromThemeCache(theme_cache_id);
     if (!popup_quick_access_field) {
@@ -340,6 +385,7 @@ static int ApplyPopups(const IMGHDR* wallpaper) {
             popup_search_field_clear_left_end, popup_search_field_clear_top_end, popup_field_clear_bottom_start,
             0, SKIN.popup.fields.border_col);
     }
+    PBar_Step(PBAR_TEXT_APPLY, ThemeUtils_GetImageDisplayName(theme_cache_id));
     return 0;
 }
 
@@ -354,6 +400,7 @@ static int ApplyProgressBar() {
     if (!InjectImageSolid(GetIMGHDRFromThemeCache(theme_cache_id), SKIN.progress_bar.fg_col)) {
         return theme_cache_id;
     }
+    PBar_Step(PBAR_TEXT_APPLY, ThemeUtils_GetImageDisplayName(theme_cache_id));
     Cs_SetColor(TPC_PROGRESS_BAR_BACKGROUND, SKIN.progress_bar.bg_col);
     return 0;
 }

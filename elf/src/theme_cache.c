@@ -1,9 +1,12 @@
 #include <swilib.h>
 #include <stdio.h>
 #include <string.h>
+#include "pbar.h"
 #include "registry.h"
+#include "theme_utils.h"
 
 #define THEME_CACHE_DIR "1:\\ThemeCache"
+#define COLOR_CACHE_FILE_NAME "ColorControls.col"
 
 const char *GetFileName(enum ThemeCacheImageID id) {
     switch (id) {
@@ -99,7 +102,7 @@ static int WriteColorCache() {
         p += sprintf(p, "%03d %03d %03d %03d\n", col[0], col[1], col[2], col[3]);
     }
     char path[128];
-    sprintf(path, "%s\\%s", THEME_CACHE_DIR, "ColorControls.col");
+    sprintf(path, "%s\\%s", THEME_CACHE_DIR, COLOR_CACHE_FILE_NAME);
     FILE *file = fopen(path, "w");
     if (file) {
         const size_t size = p - buffer;
@@ -127,16 +130,18 @@ int ThemeCache_Save() {
             return 0;
         }
     }
-    for (int i = TCI_HEADLINE_DEFAULT; i <= TCI_STATUS_BAR_FULLSCREEN; i++) {
-        if (i == TCI_SELECTION_ICON_ONLY) {
+    for (int theme_cache_id = TCI_HEADLINE_DEFAULT; theme_cache_id <= TCI_STATUS_BAR_FULLSCREEN; theme_cache_id++) {
+        if (theme_cache_id == TCI_SELECTION_ICON_ONLY) {
             continue;
         }
-        if (WriteImageCache(i) != 1) {
+        if (WriteImageCache(theme_cache_id) != 1) {
             return 0;
         }
+        PBar_Step(PBAR_TEXT_SAVE, ThemeUtils_GetImageDisplayName(theme_cache_id));
     }
     if (WriteColorCache() != 1) {
         return 0;
     }
+    PBar_Step(PBAR_TEXT_SAVE, COLOR_CACHE_FILE_NAME);
     return 1;
 }

@@ -4,42 +4,42 @@
 #include <string.h>
 #include "ipc.h"
 #include "skin.h"
+#include "pbar.h"
 #include "theme.h"
 #include "config.h"
 #include "registry.h"
 #include "theme_cache.h"
 
 typedef struct {
+    int gui_id;
+    int current;
+    int total;
+    WSHDR *text;
+} PBAR;
+
+typedef struct {
     CSM_RAM csm;
     int reg_client_id;
     char skin_path[128];
     int popup_gui_id;
-    int please_wait_gui_id;
+    PBAR pbar;
     GBSTMR tmr_apply_theme;
 } MAIN_CSM;
 
 const int minus11 =- 11;
 unsigned short maincsm_name_body[140];
 
-int ShowWait() {
-    return ShowWaitBox(0x11, (int)"Applying theme...");
-}
-
-void RegClient(MAIN_CSM *csm) {
-    if (csm->reg_client_id == - 1) {
-        csm->reg_client_id = Registry_RegClient_Wallpaper();
-        if (csm->reg_client_id < 0) {
-            MsgBoxError(0x11, (int)"Failed to register client with Registry");
-            csm->reg_client_id = -1;
-        }
-    }
+void InitPBar(MAIN_CSM *csm) {
+    csm->pbar.text = NULL;
+    zeromem(&csm->pbar, sizeof(PBAR));
+    csm->pbar.total = (TCI_STATUS_BAR_FULLSCREEN - 1) + 1; // total theme images + separator
+    csm->pbar.total += (TCI_STATUS_BAR_FULLSCREEN - 1) + 1; // + cache
 }
 
 void ApplyTheme(MAIN_CSM *csm) {
     if (Skin_Load(csm->skin_path) == 0) {
         const int err = Theme_Apply();
         if (err == 0) {
-            RegClient(csm);
             if (!ThemeCache_Save()) {
                 ShowMSG(0x11, (int)"Theme applied, but cache not saved");
             } else {
@@ -57,8 +57,8 @@ void ApplyTheme(MAIN_CSM *csm) {
     } else {
         MsgBoxError(0x11, (int)"Error loading skin");
     }
-    GeneralFunc_flag1(csm->please_wait_gui_id, 1);
-    csm->please_wait_gui_id = 0;
+    GeneralFunc_flag1(csm->pbar.gui_id, 1);
+    InitPBar(csm);
 }
 
 void ApplyThemeTimerProc(GBSTMR *tmr) {
@@ -92,7 +92,7 @@ int OnMessage(CSM_RAM *data, GBS_MSG *msg) {
     if (msg->msg == MSG_IPC) {
         const IPC_REQ *ipc = msg->data0;
         if (strcmpi(ipc->name_to, IPC_NAME) == 0) {
-            const IPC_DATA *ipc_data = ipc->data;
+            IPC_DATA *ipc_data = ipc->data;
             if (msg->submess == IPC_RUN) {
                 const int csm_id = (int)ipc_data->data0;
                 const char *exe_path = ipc_data->data1;
@@ -112,13 +112,33 @@ int OnMessage(CSM_RAM *data, GBS_MSG *msg) {
                     }
                     return 0;
                 }
+                if (csm->reg_client_id == - 1) {
+                    csm->reg_client_id = Registry_RegClient_Wallpaper();
+                    if (csm->reg_client_id < 0) {
+                        MsgBoxError(0x11, (int)"Failed to register client with Registry");
+                        csm->reg_client_id = -1;
+                    }
+                }
             } else if (msg->submess == IPC_APPLY_THEME) {
-                if (!csm->please_wait_gui_id) {
-                    csm->please_wait_gui_id = ShowWait();
+                if (!csm->pbar.gui_id) {
+                    csm->pbar.gui_id = PBar_Create();
                     SUBPROC(ApplyTheme, csm);
                 } else {
                     MsgBoxError(0x11, (int)"Theme is already being applied");
                 }
+            } else if (msg->submess == IPC_PBAR_STEP) {
+                if (csm->pbar.gui_id) {
+                    csm->pbar.current++;
+                    if (!csm->pbar.text) {
+                        csm->pbar.text = AllocWS(64);
+                        SetPBarText(csm->pbar.gui_id, csm->pbar.text);
+                    }
+                    wsprintf(csm->pbar.text, "%t", ipc_data->data0);
+                    const float percent = (float)(csm->pbar.current) / (float)csm->pbar.total;
+                    SetPBarValue(csm->pbar.gui_id, (int)(100 * percent));
+                }
+                mfree(ipc_data->data0);
+                mfree(ipc_data);
             }
         }
     } else if (msg->msg == MSG_GUI_DESTROYED) {
@@ -129,6 +149,7 @@ int OnMessage(CSM_RAM *data, GBS_MSG *msg) {
     } else if (msg->msg == MSG_RECONFIGURE_REQ) {
         if (strcmpi(msg->data0, CFG_PATH) == 0) {
             Config_Init();
+            strcpy(csm->skin_path, CFG.skin_path);
             ShowMSG(0x11, (int)"89ThemeEngine config updated!");
         } else if (strcmpi(msg->data0, csm->skin_path) == 0) {
             IPC_SendMessage(IPC_APPLY_THEME, NULL);
@@ -143,7 +164,8 @@ int OnMessage(CSM_RAM *data, GBS_MSG *msg) {
 void OnCreate(CSM_RAM *data) {
     MAIN_CSM *csm = (MAIN_CSM*)data;
     csm->reg_client_id = -1;
-    csm->csm.state = CSM_STATE_OPEN;
+    strcpy(csm->skin_path, CFG.skin_path);
+    InitPBar(csm);
 }
 
 void OnClose(CSM_RAM *data) {
@@ -153,7 +175,7 @@ void OnClose(CSM_RAM *data) {
     }
     GBS_DelTimer(&(csm->tmr_apply_theme));
     GeneralFunc_flag1(csm->popup_gui_id, 1);
-    GeneralFunc_flag1(csm->please_wait_gui_id, 1);
+    GeneralFunc_flag1(csm->pbar.gui_id, 1);
     SUBPROC(kill_elf);
 }
 

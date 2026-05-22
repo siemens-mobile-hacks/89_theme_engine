@@ -3,6 +3,7 @@
 enum {
     IPC_RUN,
     IPC_APPLY_THEME,
+    IPC_PBAR_STEP,
 };
 
 typedef struct {
