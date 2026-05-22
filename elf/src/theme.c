@@ -198,9 +198,7 @@ static int ApplyBottom(const IMGHDR *wallpaper, const uint16_t *crop_y) {
 }
 
 static int ApplySelection() {
-    int theme_cache_id = 0;
-    for (int i = 0; i < 3; i++) {
-        theme_cache_id = TCI_SELECTION_1_LINE + i;
+    for (int theme_cache_id = TCI_SELECTION_1_LINE; theme_cache_id <= TCI_SELECTION_3_LINE; theme_cache_id++) {
         IMGHDR *selection = GetIMGHDRFromThemeCache(theme_cache_id);
         if (!selection) {
             return theme_cache_id;
@@ -218,9 +216,10 @@ static int ApplySelection() {
         }
     }
     Cs_SetColor(TPC_SELECT_FOREGROUND, SKIN.selection.selected_text_col);
-    Cs_SetColor(TPC_POPUP_SELECT_FOREGROUD, SKIN.selection.selected_text_col);
     Cs_SetColor(TPC_UNSELECT_FOREGOUND, SKIN.selection.unselected_text_col);
+    Cs_SetColor(TPC_POPUP_SELECT_FOREGROUD, SKIN.selection.selected_text_col);
     Cs_SetColor(TPC_WINDOW_FOREGROUND, SKIN.selection.unselected_text_col);
+    Cs_SetTransparent(TPC_POPUP_SELECT_BACKGROUD);
     return 0;
 }
 
