@@ -130,7 +130,7 @@ int ThemeCache_Save() {
             return 0;
         }
     }
-    for (int theme_cache_id = TCI_HEADLINE_DEFAULT; theme_cache_id <= TCI_STATUS_BAR_FULLSCREEN; theme_cache_id++) {
+    for (int theme_cache_id = 0; theme_cache_id < TCI_TOTAL; theme_cache_id++) {
         if (theme_cache_id == TCI_SELECTION_ICON_ONLY) {
             continue;
         }

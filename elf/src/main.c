@@ -21,6 +21,7 @@ typedef struct {
     CSM_RAM csm;
     int reg_client_id;
     char skin_path[128];
+    int is_applying_theme;
     int popup_gui_id;
     PBAR pbar;
     GBSTMR tmr_apply_theme;
@@ -32,12 +33,13 @@ unsigned short maincsm_name_body[140];
 void InitPBar(MAIN_CSM *csm) {
     csm->pbar.text = NULL;
     zeromem(&csm->pbar, sizeof(PBAR));
-    csm->pbar.total = (TCI_STATUS_BAR_FULLSCREEN - 1) + 1; // total theme images + separator
-    csm->pbar.total += (TCI_STATUS_BAR_FULLSCREEN - 1) + 1; // + cache
+    csm->pbar.total = TCI_TOTAL + 1; // total images + separator
+    csm->pbar.total += TCI_TOTAL - 1 + 1; // cache: total images - selection_icon_only + col
 }
 
 void ApplyTheme(MAIN_CSM *csm) {
     if (Skin_Load(csm->skin_path) == 0) {
+        csm->is_applying_theme = 1;
         const int err = Theme_Apply();
         if (err == 0) {
             if (!ThemeCache_Save()) {
@@ -54,11 +56,12 @@ void ApplyTheme(MAIN_CSM *csm) {
             sprintf(msg, "Failed to apply theme, error %d", err);
             ShowMSG(0x11, (int)msg);
         }
+        GeneralFunc_flag1(csm->pbar.gui_id, 1);
+        InitPBar(csm);
+        csm->is_applying_theme = 0;
     } else {
         MsgBoxError(0x11, (int)"Error loading skin");
     }
-    GeneralFunc_flag1(csm->pbar.gui_id, 1);
-    InitPBar(csm);
 }
 
 void ApplyThemeTimerProc(GBSTMR *tmr) {
@@ -120,7 +123,7 @@ int OnMessage(CSM_RAM *data, GBS_MSG *msg) {
                     }
                 }
             } else if (msg->submess == IPC_APPLY_THEME) {
-                if (!csm->pbar.gui_id) {
+                if (!csm->is_applying_theme) {
                     csm->pbar.gui_id = PBar_Create();
                     SUBPROC(ApplyTheme, csm);
                 } else {
@@ -145,6 +148,8 @@ int OnMessage(CSM_RAM *data, GBS_MSG *msg) {
         const int gui_id = (int)msg->data0;
         if (gui_id == csm->popup_gui_id) {
             csm->popup_gui_id = 0;
+        } else if (gui_id == csm->pbar.gui_id) {
+            csm->pbar.gui_id = 0;
         }
     } else if (msg->msg == MSG_RECONFIGURE_REQ) {
         if (strcmpi(msg->data0, CFG_PATH) == 0) {

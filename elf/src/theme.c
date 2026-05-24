@@ -10,7 +10,7 @@
 
 #define BODY_TAB_SEPARATOR_Y 33
 #define POPUP_OPTIONS_CLEAR_H 5
-#define POPUP_OPTIONS_SEPARATOR_Y 34
+#define POPUP_OPTIONS_SEPARATOR_Y 35
 #define POPUP_FEEDBACK_CROP_Y  40
 #define POPUP_FEEDBACK_CLEAR_W 4
 #define POPUP_FEEDBACK_CLEAR_H 28
@@ -22,7 +22,7 @@
 #define Cs_Update() RscMgr_CsUpdate()
 
 static uint16_t InjectImage(IMGHDR *dest, const IMGHDR *wallpaper, int crop_y) {
-    uint8_t *bitmap = (dest) ? dest->bitmap : NULL;
+    uint8_t *bitmap = dest->bitmap;
     if (bitmap) {
         IMGHDR *new_img = IMGHDR_CropVertical(wallpaper, crop_y, dest->h);
         if (new_img) {
@@ -36,7 +36,7 @@ static uint16_t InjectImage(IMGHDR *dest, const IMGHDR *wallpaper, int crop_y) {
 }
 
 static int InjectImageSolid(IMGHDR *dest, const uint8_t rgba[4]) {
-    uint8_t *bitmap = (dest) ? dest->bitmap : NULL;
+    uint8_t *bitmap = dest->bitmap;
     if (bitmap) {
         IMGHDR *new_img = IMGHDR_CreateSolid(dest->w, dest->h, rgba);
         if (new_img) {
@@ -220,7 +220,11 @@ static int ApplyBottom(const IMGHDR *wallpaper, const uint16_t *crop_y) {
     }
     PBar_Step(PBAR_TEXT_APPLY, ThemeUtils_GetImageDisplayName(theme_cache_id));
     theme_cache_id = TCI_BOTTOM_FULLSCREEN;
-    if (!IMGHDR_Clone(GetIMGHDRFromThemeCache(theme_cache_id), bottom_default)) {
+    IMGHDR *bottom_fullscreen = GetIMGHDRFromThemeCache(theme_cache_id);
+    if (!bottom_fullscreen) {
+        return theme_cache_id;
+    }
+    if (!IMGHDR_Clone(bottom_fullscreen, bottom_default)) {
         return theme_cache_id;
     }
     PBar_Step(PBAR_TEXT_APPLY, ThemeUtils_GetImageDisplayName(theme_cache_id));
@@ -229,7 +233,8 @@ static int ApplyBottom(const IMGHDR *wallpaper, const uint16_t *crop_y) {
 }
 
 static int ApplySelection() {
-    for (int theme_cache_id = TCI_SELECTION_1_LINE; theme_cache_id <= TCI_SELECTION_3_LINE; theme_cache_id++) {
+    int theme_cache_id = TCI_SELECTION_1_LINE;
+    while(theme_cache_id <= TCI_SELECTION_3_LINE) {
         IMGHDR *selection = GetIMGHDRFromThemeCache(theme_cache_id);
         if (!selection) {
             return theme_cache_id;
@@ -246,7 +251,19 @@ static int ApplySelection() {
             IMGHDR_DrawBorder(selection, 0, selection_clear_top_end, selection->w - 1, selection->h - 1, 0, SKIN.selection.border_col);
         }
         PBar_Step(PBAR_TEXT_APPLY, ThemeUtils_GetImageDisplayName(theme_cache_id));
+        theme_cache_id++;
     }
+    theme_cache_id = TCI_SELECTION_ICON_ONLY;
+    IMGHDR *selection_icon_only = GetIMGHDRFromThemeCache(theme_cache_id);
+    if (!selection_icon_only) {
+        return theme_cache_id;
+    }
+    if (selection_icon_only->bitmap) {
+        mfree(selection_icon_only->bitmap);
+    }
+    zeromem(selection_icon_only, sizeof(IMGHDR));
+    PBar_Step(PBAR_TEXT_APPLY, ThemeUtils_GetImageDisplayName(theme_cache_id));
+
     Cs_SetColor(TPC_SELECT_FOREGROUND, SKIN.selection.selected_text_col);
     Cs_SetColor(TPC_UNSELECT_FOREGOUND, SKIN.selection.unselected_text_col);
     Cs_SetColor(TPC_POPUP_SELECT_FOREGROUD, SKIN.selection.selected_text_col);
@@ -277,9 +294,10 @@ static int ApplyTabs() {
     if (!tab_selected_mask) {
         return theme_cache_id;
     }
-    mfree(tab_selected->bitmap);
-    memcpy(tab_selected, tab_selected_mask, sizeof(IMGHDR));
-    mfree(tab_selected_mask);
+    if (!IMGHDR_Clone(tab_selected, tab_selected_mask)) {
+        return theme_cache_id;
+    }
+    FreeIMGHDR(tab_selected_mask);
     PBar_Step(PBAR_TEXT_APPLY, ThemeUtils_GetImageDisplayName(theme_cache_id));
     return 0;
 }
@@ -321,7 +339,10 @@ static int ApplyPopups(const IMGHDR* wallpaper) {
         return theme_cache_id;
     }
     crop_y = status_bar->h + headline->h;
-    IMGHDR* popup_options = GetIMGHDRFromThemeCache(theme_cache_id);
+    IMGHDR *popup_options = GetIMGHDRFromThemeCache(theme_cache_id);
+    if (!popup_options) {
+        return theme_cache_id;
+    }
     popup_options->h = popup_feedback->h + 1;
     popup_options = PrepareBgImage(popup_options, wallpaper, crop_y,
                                    SKIN.popup.blur, SKIN.popup.blur_radius,
@@ -397,7 +418,11 @@ static int ApplyScrollBar() {
 
 static int ApplyProgressBar() {
     const int theme_cache_id = TCI_PROGRESS_BAR;
-    if (!InjectImageSolid(GetIMGHDRFromThemeCache(theme_cache_id), SKIN.progress_bar.fg_col)) {
+    IMGHDR *progress_bar = GetIMGHDRFromThemeCache(theme_cache_id);
+    if (!progress_bar) {
+        return theme_cache_id;
+    }
+    if (!InjectImageSolid(progress_bar, SKIN.progress_bar.fg_col)) {
         return theme_cache_id;
     }
     PBar_Step(PBAR_TEXT_APPLY, ThemeUtils_GetImageDisplayName(theme_cache_id));
@@ -418,8 +443,7 @@ int Theme_Apply() {
     if (wallpaper) {
         wallpaper->bpnum = IMGHDR_TYPE_RGB565;
         if (wallpaper->w != ScreenW() && wallpaper->h != ScreenH()) {
-            MsgBoxError(0x11, (int)"Wrong wallpaper size");
-            return -1;
+            return -2;
         }
         int error = 0;
         uint16_t crop_y = 0;
