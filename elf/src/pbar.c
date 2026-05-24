@@ -19,8 +19,15 @@ void PBar_Step(PBarTextType type, const char *text) {
     // ReSharper disable once CppDFAMemoryLeak
     ipc_data->data0 = malloc(64);
     if (text) {
-        if (type == PBAR_TEXT_APPLY || type == PBAR_TEXT_SAVE) {
-            const char *prefix = (type == PBAR_TEXT_APPLY) ? "Applied" : "Saved";
+        char *prefix = NULL;
+        if (type == PBAR_TEXT_APPLIED) {
+            prefix = "Applied";
+        } else if (type == PBAR_TEXT_SAVED) {
+            prefix = "Saved";
+        } else if (type == PBAR_TEXT_DELETED) {
+            prefix = "Deleted";
+        }
+        if (prefix) {
             snprintf(ipc_data->data0, 64, "%s: %s", prefix, text);
         } else {
             snprintf(ipc_data->data0, 64, "%s", text);

@@ -32,6 +32,8 @@ const char *GetFileName(enum ThemeCacheImageID id) {
             return "background_picture_selection_2lines";
         case TCI_SELECTION_3_LINE:
             return "background_picture_selection_3lines";
+        case TCI_SELECTION_ICON_ONLY:
+            return "background_picture_selection_icon";
         case TCI_POPUP_SEARCH_FIELD:
             return "background_picture_searchfield_popup";
         case TCI_POPUP_QUICK_ACCESS_FIELD:
@@ -51,15 +53,15 @@ const char *GetFileName(enum ThemeCacheImageID id) {
     }
 }
 
+void GetFilePath(char *dest, enum ThemeCacheImageID id) {
+    sprintf(dest, "%s\\%s.dat", THEME_CACHE_DIR, GetFileName(id));
+}
+
 static int WriteImageCache(enum ThemeCacheImageID id) {
     char path[128];
     const IMGHDR *img = GetIMGHDRFromThemeCache(id);
     if (img) {
-        const char *file_name = GetFileName(id);
-        if (!file_name) {
-            return 0;
-        }
-        sprintf(path, "%s\\%s.dat", THEME_CACHE_DIR, file_name);
+        GetFilePath(path, id);
         FILE *file = fopen(path, "wb");
         if (file) {
             const uint16_t w = img->w;
@@ -123,25 +125,26 @@ int ThemeCache_Save() {
     uint32_t err = 0;
     const int r = isdir(THEME_CACHE_DIR, &err);
     if (r != 1) { // !dir
-        if (r == 0) { // file
-            return 0;
-        }
-        if (sys_mkdir(THEME_CACHE_DIR, &err) != 0) {
+        if (!sys_mkdir(THEME_CACHE_DIR, &err)) {
             return 0;
         }
     }
     for (int theme_cache_id = 0; theme_cache_id < TCI_TOTAL; theme_cache_id++) {
         if (theme_cache_id == TCI_SELECTION_ICON_ONLY) {
-            continue;
-        }
-        if (WriteImageCache(theme_cache_id) != 1) {
+            char path[128];
+            GetFilePath(path, theme_cache_id);
+            sys_unlink(path, &err);
+            PBar_Step(PBAR_TEXT_DELETED, ThemeUtils_GetImageDisplayName(theme_cache_id));
+        } else if (WriteImageCache(theme_cache_id)) {
+            PBar_Step(PBAR_TEXT_APPLIED, ThemeUtils_GetImageDisplayName(theme_cache_id));
+        } else {
             return 0;
         }
-        PBar_Step(PBAR_TEXT_SAVE, ThemeUtils_GetImageDisplayName(theme_cache_id));
+
     }
     if (WriteColorCache() != 1) {
         return 0;
     }
-    PBar_Step(PBAR_TEXT_SAVE, COLOR_CACHE_FILE_NAME);
+    PBar_Step(PBAR_TEXT_SAVED, COLOR_CACHE_FILE_NAME);
     return 1;
 }

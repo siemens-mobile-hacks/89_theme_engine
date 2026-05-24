@@ -34,7 +34,7 @@ void InitPBar(MAIN_CSM *csm) {
     csm->pbar.text = NULL;
     zeromem(&csm->pbar, sizeof(PBAR));
     csm->pbar.total = TCI_TOTAL + 1; // total images + separator
-    csm->pbar.total += TCI_TOTAL - 1 + 1; // cache: total images - selection_icon_only + col
+    csm->pbar.total += TCI_TOTAL + 1; // cache: total images + col
 }
 
 void ApplyTheme(MAIN_CSM *csm) {
