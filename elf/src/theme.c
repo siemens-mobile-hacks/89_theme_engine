@@ -96,7 +96,9 @@ static int ApplyGeneral() {
         IMGHDR_DrawHLine(new_separator, 0, 0, new_separator->w - 1, LINE_DOTTED, SKIN.general.separator_col);
         PIT_SetImage(CFG.pit.separator, new_separator);
     }
-    PBar_Step(PBAR_TEXT_APPLIED, "Menu separator");
+    char *text = ThemeUtils_GetPITImageDisplayName(CFG.pit.separator);
+    PBar_Step(PBAR_TEXT_APPLIED, text);
+    mfree(text);
     Cs_SetColor(TPC_SELECT_BORDER, SKIN.general.select_border_col);
     Cs_SetColor(TPC_SEPARATOR, SKIN.general.separator_col);
     return 0;
@@ -113,7 +115,7 @@ static int ApplyStatusBar(const IMGHDR *wallpaper, uint16_t *crop_y) {
     if (!ConvertImage(status_bar_standard)) {
         return theme_cache_id;
     }
-    PBar_Step(PBAR_TEXT_APPLIED, ThemeUtils_GetImageDisplayName(theme_cache_id));
+    PBar_Step(PBAR_TEXT_APPLIED, ThemeUtils_GetThemeImageDisplayName(theme_cache_id));
     theme_cache_id = TCI_STATUS_BAR_FULLSCREEN;
     IMGHDR *status_bar_fullscreen = GetIMGHDRFromThemeCache(theme_cache_id);
     if (!status_bar_fullscreen) {
@@ -122,7 +124,7 @@ static int ApplyStatusBar(const IMGHDR *wallpaper, uint16_t *crop_y) {
     if (!IMGHDR_Clone(status_bar_fullscreen, status_bar_standard)) {
         return theme_cache_id;
     }
-    PBar_Step(PBAR_TEXT_APPLIED, ThemeUtils_GetImageDisplayName(theme_cache_id));
+    PBar_Step(PBAR_TEXT_APPLIED, ThemeUtils_GetThemeImageDisplayName(theme_cache_id));
     *crop_y += status_bar_standard->h;
     return 0;
 }
@@ -149,7 +151,7 @@ static int ApplyHeadline(const IMGHDR *wallpaper, uint16_t *crop_y) {
     if (!ConvertImage(headline_default)) {
         return theme_cache_id;
     }
-    PBar_Step(PBAR_TEXT_APPLIED, ThemeUtils_GetImageDisplayName(theme_cache_id));
+    PBar_Step(PBAR_TEXT_APPLIED, ThemeUtils_GetThemeImageDisplayName(theme_cache_id));
     theme_cache_id = TCI_HEADLINE_FULLSCREEN;
     IMGHDR *headline_fullscreen = GetIMGHDRFromThemeCache(theme_cache_id);
     if (!headline_fullscreen) {
@@ -158,7 +160,7 @@ static int ApplyHeadline(const IMGHDR *wallpaper, uint16_t *crop_y) {
     if (!IMGHDR_Clone(headline_fullscreen, headline_default)) {
         return theme_cache_id;
     }
-    PBar_Step(PBAR_TEXT_APPLIED, ThemeUtils_GetImageDisplayName(theme_cache_id));
+    PBar_Step(PBAR_TEXT_APPLIED, ThemeUtils_GetThemeImageDisplayName(theme_cache_id));
     Cs_SetColor(TPC_HEADER_FOREGROUND, SKIN.headline.text_col);
     Cs_SetColor(TPC_EXTRA_HEADER_FOREGROUND, SKIN.headline.text_col);
     Cs_SetColor(TPC_LIGHT_TEXT_FOREGROUND, SKIN.headline.text_col);
@@ -179,7 +181,7 @@ static int ApplyBody(const IMGHDR *wallpaper, uint16_t *crop_y) {
     if (!ConvertImage(body_default)) {
         return theme_cache_id;
     }
-    PBar_Step(PBAR_TEXT_APPLIED, ThemeUtils_GetImageDisplayName(theme_cache_id));
+    PBar_Step(PBAR_TEXT_APPLIED, ThemeUtils_GetThemeImageDisplayName(theme_cache_id));
     theme_cache_id = TCI_BODY_TAB;
     IMGHDR *body_tab = PrepareBgImage(GetIMGHDRFromThemeCache(theme_cache_id), wallpaper, *crop_y,
         SKIN.body.blur, SKIN.body.blur_radius,
@@ -196,7 +198,7 @@ static int ApplyBody(const IMGHDR *wallpaper, uint16_t *crop_y) {
     if (!ConvertImage(body_tab)) {
         return theme_cache_id;
     }
-    PBar_Step(PBAR_TEXT_APPLIED, ThemeUtils_GetImageDisplayName(theme_cache_id));
+    PBar_Step(PBAR_TEXT_APPLIED, ThemeUtils_GetThemeImageDisplayName(theme_cache_id));
     Cs_SetColor(TPC_FOREGROUND, SKIN.body.main_text_col);
     Cs_SetColor(TPC_DISABLED_TEXT_FOREGROUND, SKIN.body.disabled_text_col);
     Cs_SetColor(TPC_EDIT_HEADER_FOREGROUND, SKIN.body.edit_header_text_col);
@@ -219,7 +221,7 @@ static int ApplyBottom(const IMGHDR *wallpaper, const uint16_t *crop_y) {
     if (!ConvertImage(bottom_default)) {
         return theme_cache_id;
     }
-    PBar_Step(PBAR_TEXT_APPLIED, ThemeUtils_GetImageDisplayName(theme_cache_id));
+    PBar_Step(PBAR_TEXT_APPLIED, ThemeUtils_GetThemeImageDisplayName(theme_cache_id));
     theme_cache_id = TCI_BOTTOM_FULLSCREEN;
     IMGHDR *bottom_fullscreen = GetIMGHDRFromThemeCache(theme_cache_id);
     if (!bottom_fullscreen) {
@@ -228,7 +230,7 @@ static int ApplyBottom(const IMGHDR *wallpaper, const uint16_t *crop_y) {
     if (!IMGHDR_Clone(bottom_fullscreen, bottom_default)) {
         return theme_cache_id;
     }
-    PBar_Step(PBAR_TEXT_APPLIED, ThemeUtils_GetImageDisplayName(theme_cache_id));
+    PBar_Step(PBAR_TEXT_APPLIED, ThemeUtils_GetThemeImageDisplayName(theme_cache_id));
     Cs_SetColor(TPC_BOTTOM_FOREGROUND, SKIN.bottom.text_col);
     return 0;
 }
@@ -251,7 +253,7 @@ static int ApplySelection() {
         if (SKIN.selection.border) {
             IMGHDR_DrawBorder(selection, 0, selection_clear_top_end, selection->w - 1, selection->h - 1, 0, SKIN.selection.border_col);
         }
-        PBar_Step(PBAR_TEXT_APPLIED, ThemeUtils_GetImageDisplayName(theme_cache_id));
+        PBar_Step(PBAR_TEXT_APPLIED, ThemeUtils_GetThemeImageDisplayName(theme_cache_id));
         theme_cache_id++;
     }
     theme_cache_id = TCI_SELECTION_ICON_ONLY;
@@ -263,7 +265,7 @@ static int ApplySelection() {
         mfree(selection_icon_only->bitmap);
     }
     zeromem(selection_icon_only, sizeof(IMGHDR));
-    PBar_Step(PBAR_TEXT_APPLIED, ThemeUtils_GetImageDisplayName(theme_cache_id));
+    PBar_Step(PBAR_TEXT_APPLIED, ThemeUtils_GetThemeImageDisplayName(theme_cache_id));
 
     Cs_SetColor(TPC_SELECT_FOREGROUND, SKIN.selection.selected_text_col);
     Cs_SetColor(TPC_UNSELECT_FOREGOUND, SKIN.selection.unselected_text_col);
@@ -285,7 +287,7 @@ static int ApplyTabs() {
     if (!ConvertImage(tab_unselected)) {
         return theme_cache_id;
     }
-    PBar_Step(PBAR_TEXT_APPLIED, ThemeUtils_GetImageDisplayName(theme_cache_id));
+    PBar_Step(PBAR_TEXT_APPLIED, ThemeUtils_GetThemeImageDisplayName(theme_cache_id));
     theme_cache_id = TCI_TAB_SELECTED;
     IMGHDR *tab_selected = GetIMGHDRFromThemeCache(theme_cache_id);
     if (!tab_selected) {
@@ -299,7 +301,7 @@ static int ApplyTabs() {
         return theme_cache_id;
     }
     FreeIMGHDR(tab_selected_mask);
-    PBar_Step(PBAR_TEXT_APPLIED, ThemeUtils_GetImageDisplayName(theme_cache_id));
+    PBar_Step(PBAR_TEXT_APPLIED, ThemeUtils_GetThemeImageDisplayName(theme_cache_id));
     return 0;
 }
 
@@ -331,7 +333,7 @@ static int ApplyPopups(const IMGHDR* wallpaper) {
     if (!ConvertImage(popup_feedback)) {
         return theme_cache_id;
     }
-    PBar_Step(PBAR_TEXT_APPLIED, ThemeUtils_GetImageDisplayName(theme_cache_id));
+    PBar_Step(PBAR_TEXT_APPLIED, ThemeUtils_GetThemeImageDisplayName(theme_cache_id));
     // Options
     theme_cache_id = TCI_POPUP_OPTIONS;
     IMGHDR *status_bar = GetIMGHDRFromThemeCache(TCI_STATUS_BAR_STANDARD);
@@ -368,7 +370,7 @@ static int ApplyPopups(const IMGHDR* wallpaper) {
     if (!ConvertImage(popup_options)) {
         return theme_cache_id;
     }
-    PBar_Step(PBAR_TEXT_APPLIED, ThemeUtils_GetImageDisplayName(theme_cache_id));
+    PBar_Step(PBAR_TEXT_APPLIED, ThemeUtils_GetThemeImageDisplayName(theme_cache_id));
     // Fields
     theme_cache_id = TCI_POPUP_SEARCH_FIELD;
     IMGHDR *popup_search_field = GetIMGHDRFromThemeCache(theme_cache_id);
@@ -386,7 +388,7 @@ static int ApplyPopups(const IMGHDR* wallpaper) {
             0, 0, popup_search_field->w - 1, popup_field_clear_bottom_start,
             0, SKIN.popup.fields.border_col);
     }
-    PBar_Step(PBAR_TEXT_APPLIED, ThemeUtils_GetImageDisplayName(theme_cache_id));
+    PBar_Step(PBAR_TEXT_APPLIED, ThemeUtils_GetThemeImageDisplayName(theme_cache_id));
     theme_cache_id = TCI_POPUP_QUICK_ACCESS_FIELD;
     IMGHDR *popup_quick_access_field = GetIMGHDRFromThemeCache(theme_cache_id);
     if (!popup_quick_access_field) {
@@ -407,7 +409,7 @@ static int ApplyPopups(const IMGHDR* wallpaper) {
             popup_search_field_clear_left_end, popup_search_field_clear_top_end, popup_field_clear_bottom_start,
             0, SKIN.popup.fields.border_col);
     }
-    PBar_Step(PBAR_TEXT_APPLIED, ThemeUtils_GetImageDisplayName(theme_cache_id));
+    PBar_Step(PBAR_TEXT_APPLIED, ThemeUtils_GetThemeImageDisplayName(theme_cache_id));
     return 0;
 }
 
@@ -426,7 +428,7 @@ static int ApplyProgressBar() {
     if (!InjectImageSolid(progress_bar, SKIN.progress_bar.fg_col)) {
         return theme_cache_id;
     }
-    PBar_Step(PBAR_TEXT_APPLIED, ThemeUtils_GetImageDisplayName(theme_cache_id));
+    PBar_Step(PBAR_TEXT_APPLIED, ThemeUtils_GetThemeImageDisplayName(theme_cache_id));
     Cs_SetColor(TPC_PROGRESS_BAR_BACKGROUND, SKIN.progress_bar.bg_col);
     return 0;
 }

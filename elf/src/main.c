@@ -32,10 +32,9 @@ const int minus11 =- 11;
 unsigned short maincsm_name_body[140];
 
 void InitPBar(MAIN_CSM *csm) {
-    csm->pbar.text = NULL;
     zeromem(&csm->pbar, sizeof(PBAR));
     csm->pbar.total = TCI_TOTAL + 1; // total images + separator
-    csm->pbar.total += TCI_TOTAL + 1; // cache: total images + col
+    csm->pbar.total += TCI_TOTAL + 2; // cache: total images + col + separator
 }
 
 void ApplyTheme(MAIN_CSM *csm) {
@@ -78,6 +77,10 @@ void ApplyThemeYesNo(const int no) {
         ApplyTheme_IPC();
     }
 }
+
+void LoadPIT() {
+    if (!ThemeCache_LoadPIT()) {
+        MsgBoxError(DIALOG_NORMAL | DIALOG_FULLSCREEN, (int)"Failed to load PIT cache");
     }
 }
 
@@ -126,6 +129,9 @@ int OnMessage(CSM_RAM *data, GBS_MSG *msg) {
                     }
                 }
                 PatchSettings_Init();
+                if (!*file_path) {
+                    SUBPROC(LoadPIT);
+                }
             } else if (msg->submess == IPC_APPLY_THEME) {
                 if (!csm->is_applying_theme) {
                     csm->pbar.gui_id = PBar_Create();
