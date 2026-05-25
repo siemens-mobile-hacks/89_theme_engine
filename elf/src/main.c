@@ -66,7 +66,7 @@ void ApplyTheme(MAIN_CSM *csm) {
 }
 
 void ApplyThemeTimerProc(GBSTMR *tmr) {
-    IPC_SendMessage(IPC_APPLY_THEME, NULL);
+    ApplyTheme_IPC();
 }
 
 void ApplyThemeTimer(MAIN_CSM *csm) {
@@ -75,7 +75,9 @@ void ApplyThemeTimer(MAIN_CSM *csm) {
 
 void ApplyThemeYesNo(const int no) {
     if (!no) {
-        IPC_SendMessage(IPC_APPLY_THEME, NULL);
+        ApplyTheme_IPC();
+    }
+}
     }
 }
 
@@ -94,9 +96,9 @@ int GetDefaultSkinPath(char *dest, const char *exe_path) {
 int OnMessage(CSM_RAM *data, GBS_MSG *msg) {
     MAIN_CSM *csm = (MAIN_CSM*)data;
     if (msg->msg == MSG_IPC) {
-        const IPC_REQ *ipc = msg->data0;
-        if (strcmpi(ipc->name_to, IPC_NAME) == 0) {
-            IPC_DATA *ipc_data = ipc->data;
+        IPC_REQ *ipc_req = msg->data0;
+        if (strcmpi(ipc_req->name_to, IPC_NAME) == 0) {
+            IPC_DATA *ipc_data = ipc_req->data;
             if (msg->submess == IPC_RUN) {
                 const int csm_id = (int)ipc_data->data0;
                 const char *exe_path = ipc_data->data1;
@@ -131,6 +133,7 @@ int OnMessage(CSM_RAM *data, GBS_MSG *msg) {
                 } else {
                     MsgBoxError(0x11, (int)"Theme is already being applied");
                 }
+                IPC_DestroyMessage(ipc_req);
             } else if (msg->submess == IPC_PBAR_STEP) {
                 if (csm->pbar.gui_id) {
                     csm->pbar.current++;
@@ -143,7 +146,7 @@ int OnMessage(CSM_RAM *data, GBS_MSG *msg) {
                     SetPBarValue(csm->pbar.gui_id, (int)(100 * percent));
                 }
                 mfree(ipc_data->data0);
-                mfree(ipc_data);
+                IPC_DestroyMessage(ipc_req);
             }
         }
     } else if (msg->msg == MSG_GUI_DESTROYED) {
@@ -160,7 +163,7 @@ int OnMessage(CSM_RAM *data, GBS_MSG *msg) {
             ShowMSG(0x11, (int)"89ThemeEngine config updated!");
             PatchSettings_Init();
         } else if (strcmpi(msg->data0, csm->skin_path) == 0) {
-            IPC_SendMessage(IPC_APPLY_THEME, NULL);
+            ApplyTheme_IPC();
         }
     } else if (msg->msg == REGISTRY_CLIENT_MSG_ID) {
         strcpy(csm->skin_path, CFG.skin_path);
@@ -234,6 +237,7 @@ int main(const char *exe_path, const char *file_path) {
     CSM_root()->csm_q->current_msg_processing_csm = save_cmpc;
     UnlockSched();
 
+    static IPC_REQ ipc_req;
     static char s_exe_path[128];
     static char s_file_path[128];
     static IPC_DATA data = { 0 };
@@ -246,7 +250,7 @@ int main(const char *exe_path, const char *file_path) {
         *s_file_path = 0;
     }
     data.data2 = s_file_path;
-    IPC_SendMessage(IPC_RUN, &data);
+    IPC_SendMessage(IPC_RUN, &ipc_req, &data);
 
     return 0;
 }

@@ -15,6 +15,7 @@ PBAR_DESC PBAR_D = {
 };
 
 void PBar_Step(PBarTextType type, const char *text) {
+    IPC_REQ *ipc_req = malloc(sizeof(IPC_REQ));
     IPC_DATA *ipc_data = malloc(sizeof(IPC_DATA));
     // ReSharper disable once CppDFAMemoryLeak
     ipc_data->data0 = malloc(64);
@@ -35,7 +36,7 @@ void PBar_Step(PBarTextType type, const char *text) {
     } else {
         strcpy(ipc_data->data0, "Unknown");
     }
-    IPC_SendMessage(IPC_PBAR_STEP, ipc_data);
+    IPC_SendMessage(IPC_PBAR_STEP, ipc_req, ipc_data);
 }
 
 int PBar_Create() {

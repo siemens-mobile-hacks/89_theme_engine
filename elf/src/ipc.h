@@ -12,6 +12,7 @@ typedef struct {
     void *data2;
 } IPC_DATA;
 
-void IPC_SendMessage(int submess, IPC_DATA *data);
+void IPC_SendMessage(int submess, IPC_REQ *ipc_req, IPC_DATA *data);
+void IPC_DestroyMessage(IPC_REQ *ipc_req);
 
 extern const char *IPC_NAME;

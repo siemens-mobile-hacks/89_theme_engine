@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <swilib.h>
+#include "ipc.h"
 #include "skin.h"
 #include "pbar.h"
 #include "config.h"
@@ -495,4 +496,9 @@ int Theme_Apply() {
         return 0;
     }
     return -1;
+}
+
+void ApplyTheme_IPC() {
+    IPC_REQ *ipc_req = malloc(sizeof(IPC_REQ));
+    IPC_SendMessage(IPC_APPLY_THEME, ipc_req, NULL);
 }
