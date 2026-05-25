@@ -4,18 +4,28 @@
 
 ## Building
 The SDK must be located at `../sdk` relative to the project root.
+
+Building elf:
 ```bash
 mkdir build_elf && cd build_elf
 cmake .. -DBUILD_TARGET=elf
-make 
+make
+```
+
+Building patch:
+```bash
+mkdir build_patch && cd build_patch
+cmake .. -DBUILD_TARGET=patch
+make
 ```
 
 ## Usage
 
-1. Copy `89ThemeEngine.elf` to `X:\ZBin\daemons\`. The ELF runs as a daemon.
-2. **Associate the `.89` extension** with `89ThemeEngine.elf`:
+1. **Apply the patch** `89ThemeEngine.vkp`. The patch is required for full functionality 
+2. Copy `89ThemeEngine.elf` to `X:\ZBin\daemons\`. The ELF runs as a daemon.
+3. **Associate the `.89` extension** with `89ThemeEngine.elf`:
    - **RUN** → `89ThemeEngine.elf` – applies the theme.
-   - **ALTRUN** → `CfgEdit.elf` – allows editing the skin file.
-3. Run the ELF once manually. It will create a default skin file named `Viktor.89` in the same folder as the ELF.
-4. Click on a `.89` file (e.g., `Viktor.89`).  
+   - **ALTRUN** → `CfgEdit.elf` – allows editing the skin file. 
+4. Run the ELF once manually. It will create a default skin file named `Viktor.89` in the same folder as the ELF. 
+5. Click on a `.89` file (e.g., `Viktor.89`).  
    The ELF will parse the skin, combine it with the current wallpaper, and apply the theme immediately.

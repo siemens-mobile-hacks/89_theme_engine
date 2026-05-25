@@ -7,6 +7,7 @@
 #include "pbar.h"
 #include "theme.h"
 #include "config.h"
+#include "patch_settings.h"
 #include "registry.h"
 #include "theme_cache.h"
 
@@ -122,6 +123,7 @@ int OnMessage(CSM_RAM *data, GBS_MSG *msg) {
                         csm->reg_client_id = -1;
                     }
                 }
+                PatchSettings_Init();
             } else if (msg->submess == IPC_APPLY_THEME) {
                 if (!csm->is_applying_theme) {
                     csm->pbar.gui_id = PBar_Create();
@@ -156,6 +158,7 @@ int OnMessage(CSM_RAM *data, GBS_MSG *msg) {
             Config_Init();
             strcpy(csm->skin_path, CFG.skin_path);
             ShowMSG(0x11, (int)"89ThemeEngine config updated!");
+            PatchSettings_Init();
         } else if (strcmpi(msg->data0, csm->skin_path) == 0) {
             IPC_SendMessage(IPC_APPLY_THEME, NULL);
         }

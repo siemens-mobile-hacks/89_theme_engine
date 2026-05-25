@@ -85,15 +85,15 @@ static IMGHDR *PrepareBgImage(IMGHDR *dest, const IMGHDR *wallpaper, uint16_t cr
 }
 
 static int ApplyGeneral() {
-    PIT_ResetImage(CFG.separator_icon_id);
-    const IMGHDR *separator = GetPITaddr(CFG.separator_icon_id);
+    PIT_ResetImage(CFG.pit.separator);
+    const IMGHDR *separator = GetPITaddr(CFG.pit.separator);
     if (separator) {
         IMGHDR *new_separator = IMGHDR_CreateSolid(separator->w, separator->h, (uint8_t [4]){0x00, 0x00, 0x00, 0x00});
         if (!new_separator) {
-            return CFG.separator_icon_id;
+            return CFG.pit.separator;
         }
         IMGHDR_DrawHLine(new_separator, 0, 0, new_separator->w - 1, LINE_DOTTED, SKIN.general.separator_col);
-        PIT_SetImage(CFG.separator_icon_id, new_separator);
+        PIT_SetImage(CFG.pit.separator, new_separator);
     }
     PBar_Step(PBAR_TEXT_APPLIED, "Menu separator");
     Cs_SetColor(TPC_SELECT_BORDER, SKIN.general.select_border_col);
