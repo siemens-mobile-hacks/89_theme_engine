@@ -41,5 +41,5 @@ void PBar_Step(PBarTextType type, const char *text) {
 
 int PBar_Create() {
     PBAR_D.proc3 = GetPBarProc3();
-    return ShowPBarBox(0x11, (int)"Applying theme...", &PBAR_D, 0, NULL);
+    return ShowPBarBox(DIALOG_NORMAL | DIALOG_DUMMY_CSM, (int)"Applying theme...", &PBAR_D, 0, NULL);
 };

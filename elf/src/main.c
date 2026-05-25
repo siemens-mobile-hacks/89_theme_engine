@@ -43,24 +43,24 @@ void ApplyTheme(MAIN_CSM *csm) {
         const int err = Theme_Apply();
         if (err == 0) {
             if (!ThemeCache_Save()) {
-                ShowMSG(0x11, (int)"Theme applied, but cache not saved");
+                ShowMSG(DIALOG_NORMAL | DIALOG_DUMMY_CSM, (int)"Theme applied, but cache not saved");
             } else {
-                ShowMSG(0x11, (int)"Theme has been applied");
+                ShowMSG(DIALOG_NORMAL | DIALOG_DUMMY_CSM, (int)"Theme has been applied");
             }
             strcpy(CFG.skin_path, csm->skin_path);
             if (!Config_Save()) {
-                MsgBoxError(0x11, (int)"Failed to save config");
+                MsgBoxError(DIALOG_NORMAL | DIALOG_DUMMY_CSM, (int)"Failed to save config");
             }
         } else {
             char msg[32];
             sprintf(msg, "Failed to apply theme, error %d", err);
-            ShowMSG(0x11, (int)msg);
+            ShowMSG(DIALOG_NORMAL | DIALOG_DUMMY_CSM, (int)msg);
         }
         GeneralFunc_flag1(csm->pbar.gui_id, 1);
         InitPBar(csm);
         csm->is_applying_theme = 0;
     } else {
-        MsgBoxError(0x11, (int)"Error loading skin");
+        MsgBoxError(DIALOG_NORMAL | DIALOG_DUMMY_CSM, (int)"Failed to load skin");
     }
 }
 
@@ -81,6 +81,12 @@ void ApplyThemeYesNo(const int no) {
 void LoadPIT() {
     if (!ThemeCache_LoadPIT()) {
         MsgBoxError(DIALOG_NORMAL | DIALOG_FULLSCREEN, (int)"Failed to load PIT cache");
+    }
+}
+
+void InitPatchSettings() {
+    if (!PatchSettings_Init()) {
+        MsgBoxError(DIALOG_NORMAL | DIALOG_DUMMY_CSM, (int)"Failed to init patch settings");
     }
 }
 
@@ -111,7 +117,7 @@ int OnMessage(CSM_RAM *data, GBS_MSG *msg) {
                     if (*file_path) {
                         strcpy(csm->skin_path, file_path);
                         if (!csm->popup_gui_id) {
-                            csm->popup_gui_id = MsgBoxYesNo(0x11, (int)"Apply theme?", ApplyThemeYesNo);
+                            csm->popup_gui_id = MsgBoxYesNo(DIALOG_NORMAL | DIALOG_DUMMY_CSM, (int)"Apply theme?", ApplyThemeYesNo);
                         }
                     } else {
                         char path[128];
@@ -124,11 +130,11 @@ int OnMessage(CSM_RAM *data, GBS_MSG *msg) {
                 if (csm->reg_client_id == - 1) {
                     csm->reg_client_id = Registry_RegClient_Wallpaper();
                     if (csm->reg_client_id < 0) {
-                        MsgBoxError(0x11, (int)"Failed to register client with Registry");
+                        MsgBoxError(DIALOG_NORMAL | DIALOG_DUMMY_CSM, (int)"Failed to register client with Registry");
                         csm->reg_client_id = -1;
                     }
                 }
-                PatchSettings_Init();
+                InitPatchSettings();
                 if (!*file_path) {
                     SUBPROC(LoadPIT);
                 }
@@ -137,7 +143,7 @@ int OnMessage(CSM_RAM *data, GBS_MSG *msg) {
                     csm->pbar.gui_id = PBar_Create();
                     SUBPROC(ApplyTheme, csm);
                 } else {
-                    MsgBoxError(0x11, (int)"Theme is already being applied");
+                    MsgBoxError(DIALOG_NORMAL | DIALOG_DUMMY_CSM, (int)"Theme is already being applied");
                 }
                 IPC_DestroyMessage(ipc_req);
             } else if (msg->submess == IPC_PBAR_STEP) {
@@ -166,8 +172,8 @@ int OnMessage(CSM_RAM *data, GBS_MSG *msg) {
         if (strcmpi(msg->data0, CFG_PATH) == 0) {
             Config_Init();
             strcpy(csm->skin_path, CFG.skin_path);
-            ShowMSG(0x11, (int)"89ThemeEngine config updated!");
-            PatchSettings_Init();
+            ShowMSG(DIALOG_NORMAL | DIALOG_DUMMY_CSM, (int)"89ThemeEngine config updated!");
+            InitPatchSettings();
         } else if (strcmpi(msg->data0, csm->skin_path) == 0) {
             ApplyTheme_IPC();
         }

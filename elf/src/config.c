@@ -20,7 +20,7 @@ CONFIG CFG = {
         {CFG_CHECKBOX, "Enable tweak", 0 ,1},
         1,
         {CFG_UINT, "Font", 0, 16},
-        FONT_SMALL_BOLD,
+        FONT_SMALL,
         {CFG_INT, "Vertical offset", 0, 10},
         2,
         {CFG_CBOX, "Text transform", 0, 4},

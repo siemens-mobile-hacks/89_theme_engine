@@ -21,7 +21,7 @@ make
 
 ## Usage
 
-1. **Apply the patch** `89ThemeEngine.vkp`. The patch is required for full functionality 
+1. **Apply the patch** `89ThemeEngine.vkp`. The patch is required for full functionality. 
 2. Copy `89ThemeEngine.elf` to `X:\ZBin\daemons\`. The ELF runs as a daemon.
 3. **Associate the `.89` extension** with `89ThemeEngine.elf`:
    - **RUN** → `89ThemeEngine.elf` – applies the theme.

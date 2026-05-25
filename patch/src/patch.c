@@ -32,12 +32,12 @@ void SoftKeys_DrawString_Hook(WSHDR *ws,
     if (*settings_p) {
         if (settings->soft_keys.enable) {
             font = settings->soft_keys.font;
-            y += settings->soft_keys.v_offset;
             if (type == 2) { // icon
                 if (!settings->soft_keys.show_middle_icon) {
                     return;
                 }
             } else {
+                y += settings->soft_keys.v_offset;
                 y2 += settings->soft_keys.v_offset;
             }
             TransformText(ws, settings->soft_keys.text_transform);

@@ -5,7 +5,7 @@
 
 SETTINGS *settings;
 
-void PatchSettings_Init() {
+int PatchSettings_Init() {
     SETTINGS **settings_p = (SETTINGS**)strtoul(CFG.settings_ram_addr, NULL, 16);
     if (settings_p) {
         if (*settings_p) {
@@ -21,9 +21,8 @@ void PatchSettings_Init() {
             settings->soft_keys.v_offset = CFG.soft_keys.v_offset;
             settings->soft_keys.text_transform = CFG.soft_keys.text_transform;
             settings->soft_keys.show_middle_icon = CFG.soft_keys.show_middle_icon;
-            return;
+            return 1;
         }
     }
-    MsgBoxError(0x11, (int)"Error apply patch settings");
+    return 0;
 }
-

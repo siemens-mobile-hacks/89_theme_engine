@@ -2,4 +2,4 @@
 
 #include "../../settings.h"
 
-void PatchSettings_Init();
+int PatchSettings_Init();
