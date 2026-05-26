@@ -20,4 +20,7 @@ SECTIONS {
     .SoftKeys 0xA1384700 : {
         KEEP(*(.text.SoftKeys_DrawString_Hook))
     }
+    .DisablePleaseWaitAnimation 0xA094EDE6 : {
+        KEEP(*(.text.DisablePleaseWaitAnimation))
+    }
 }

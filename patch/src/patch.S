@@ -9,3 +9,8 @@ blx SoftKeys_DrawString_Trampoline
 .section .text.SoftKeys_DrawMiddleIcon_Jump
 .thumb
 bl SoftKeys_DrawMiddleIcon_Hook
+
+.section .text.DisablePleaseWaitAnimation
+.thumb
+mov r0, #0x00
+bx lr
