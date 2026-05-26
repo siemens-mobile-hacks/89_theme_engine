@@ -2,4 +2,6 @@
 
 #include "../../settings.h"
 
-int PatchSettings_Init();
+void PatchSettings_Init();
+void PatchSettings_Apply();
+void PatchSettings_Destroy();

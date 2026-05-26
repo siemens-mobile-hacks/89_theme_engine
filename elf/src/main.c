@@ -84,12 +84,6 @@ void LoadPIT() {
     }
 }
 
-void InitPatchSettings() {
-    if (!PatchSettings_Init()) {
-        MsgBoxError(DIALOG_NORMAL | DIALOG_DUMMY_CSM, (int)"Failed to init patch settings");
-    }
-}
-
 int GetDefaultSkinPath(char *dest, const char *exe_path) {
     const char *p = strrchr(exe_path, '\\');
     if (p) {
@@ -134,7 +128,6 @@ int OnMessage(CSM_RAM *data, GBS_MSG *msg) {
                         csm->reg_client_id = -1;
                     }
                 }
-                InitPatchSettings();
                 if (!*file_path) {
                     SUBPROC(LoadPIT);
                 }
@@ -172,8 +165,8 @@ int OnMessage(CSM_RAM *data, GBS_MSG *msg) {
         if (strcmpi(msg->data0, CFG_PATH) == 0) {
             Config_Init();
             strcpy(csm->skin_path, CFG.skin_path);
+            PatchSettings_Apply();
             ShowMSG(DIALOG_NORMAL | DIALOG_DUMMY_CSM, (int)"89ThemeEngine config updated!");
-            InitPatchSettings();
         } else if (strcmpi(msg->data0, csm->skin_path) == 0) {
             ApplyTheme_IPC();
         }
@@ -189,10 +182,12 @@ void OnCreate(CSM_RAM *data) {
     csm->reg_client_id = -1;
     strcpy(csm->skin_path, CFG.skin_path);
     InitPBar(csm);
+    PatchSettings_Init();
 }
 
 void OnClose(CSM_RAM *data) {
     MAIN_CSM *csm = (MAIN_CSM*)data;
+    PatchSettings_Destroy();
     if (csm->reg_client_id != -1) {
         Registry_UnregClient(csm->reg_client_id);
     }

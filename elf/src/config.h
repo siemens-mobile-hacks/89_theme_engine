@@ -5,6 +5,13 @@
 typedef struct {
     const CFG_HDR cfghdr_b;
     const CFG_HDR cfghdr_0;
+    int separator;
+    const CFG_HDR cfghdr_e;
+} CONFIG_PIT;
+
+typedef struct {
+    const CFG_HDR cfghdr_b;
+    const CFG_HDR cfghdr_0;
     int enable;
     const CFG_HDR cfghdr_1;
     int font;
@@ -16,24 +23,23 @@ typedef struct {
     const CFG_HDR cfghdr_4;
     int show_middle_icon;
     const CFG_HDR cfghdr_e;
-} CONFIG_SOFT_KEYS;
+} CONFIG_PATCH_SOFT_KEYS;
 
 typedef struct {
     const CFG_HDR cfghdr_b;
     const CFG_HDR cfghdr_0;
-    int separator;
+    char settings_ram_addr[9];
+    CONFIG_PATCH_SOFT_KEYS soft_keys;
     const CFG_HDR cfghdr_e;
-} CONFIG_PIT;
+} CONFIG_PATCH;
 
 typedef struct {
     const CFG_HDR cfghdr_0;
-    char settings_ram_addr[9];
-    const CFG_HDR cfghdr_1;
     char skin_path[128];
-    const CFG_HDR cfghdr_2;
+    const CFG_HDR cfghdr_1;
     int apply_delay_ms;
     CONFIG_PIT pit;
-    CONFIG_SOFT_KEYS soft_keys;
+    CONFIG_PATCH patch;
 } CONFIG;
 
 extern CONFIG CFG;
